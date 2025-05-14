@@ -3,8 +3,7 @@ from typing import List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 
 load_dotenv()
 
@@ -12,7 +11,8 @@ GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # inisialisasi Gemini client dan konfigurasi
 MODEL = "gemini-2.0-flash"
-client = genai.Client(api_key=GOOGLE_API_KEY)
+genai.configure(api_key=GOOGLE_API_KEY)
+client = genai.GenerativeModel(MODEL)
 
 app = FastAPI(title="Intelligent Email Writer API")
 
@@ -61,17 +61,30 @@ def build_prompt(body: EmailRequest) -> str:
 # endpoint untuk generate email   ### UNTUK KODE NYA BISA DIUBAH SESUAI KEBUTUHAN ###
 @app.post("/generate/")
 async def generate_email(req: EmailRequest):
-    # ubah request menjadi prompt teks dengan fungsi build_prompt
-    prompt = build_prompt(req)
+    try:
+        # ubah request menjadi prompt teks dengan fungsi build_prompt
+        prompt = build_prompt(req)
 
-    # TODO: kirim prompt ke Gemini API
-    # response = ...
+        # TODO: kirim prompt ke Gemini API
+        response = client.generate_content(
+            prompt,
+            generation_config=genai.GenerationConfig(
+                temperature=0.7,
+                max_output_tokens=1024,
+                top_p=0.95,
+                top_k=40
+            )
+        )
 
-    # TODO: ambil hasil teks dari response dan simpan ke variabel
-    # generated = ...
+        # TODO: ambil hasil teks dari response dan simpan ke variabel
+        generated = response.text.strip()
 
-    # TODO: validasi hasil respon
-    # if not generated:
-    #     raise ValueError("Tidak ada hasil yang dihasilkan oleh Gemini API")
+        # TODO: validasi hasil respon
+        if not generated:
+            raise ValueError("Tidak ada hasil yang dihasilkan oleh Gemini API")
 
-    return {"generated_email": generated}
+        return {"generated_email": generated}
+    
+    except Exception as e:
+        # tanggani error yang mungkin muncul
+        raise HTTPException(status_code=500, detail=f"Error generating email: {str(e)}")
