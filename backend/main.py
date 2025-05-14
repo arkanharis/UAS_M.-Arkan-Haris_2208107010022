@@ -3,8 +3,8 @@ from typing import List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+import google.generativeai as genai
+from google.generativeai.types import GenerationConfig
 
 load_dotenv()
 
@@ -12,7 +12,7 @@ GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # inisialisasi Gemini client dan konfigurasi
 MODEL = "gemini-2.0-flash"
-client = genai.Client(api_key=GOOGLE_API_KEY)
+client = genai.configure(api_key=GOOGLE_API_KEY)
 
 app = FastAPI(title="Intelligent Email Writer API")
 
